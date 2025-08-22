@@ -1,0 +1,23 @@
+import jwt from "jsonwebtoken";
+
+export const handleResponse = (res, statusCode = 200, message = '', data = null, error = false) => {
+    return res.status(statusCode).json({
+        statusCode,
+        error,
+        message,
+        data
+    });
+};
+
+
+export const handleError = (res, error, statusCode = 400, fallbackMessage = 'Something went wrong') => {
+    console.error(error);
+    return res.status(statusCode).json({
+        error: true,
+        message: error?.message || fallbackMessage
+    });
+};
+
+export const signToken = (payload) => {
+  return jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '7d' });
+};
