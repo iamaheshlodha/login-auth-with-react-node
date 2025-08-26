@@ -3,59 +3,87 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { login } from "../store/slices/auth-slice";
 import { useDispatch } from 'react-redux';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
 
-export default function Login({ setIsAuthenticated }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+export default function Login() {
   const [loading, setLoading] = useState(false);
-    const dispatch = useDispatch();
-
+  const [apiMessage, setApiMessage] = useState('');
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  // ✅ Validation Schema
+  const validationSchema = Yup.object({
+    email: Yup.string()
+      .email('Invalid email format')
+      .required('Email is required'),
+    password: Yup.string()
+      .min(6, 'Password must be at least 6 characters')
+      .required('Password is required'),
+  });
 
-    try {
-      const response = await axios.post('http://localhost:3001/api/v1/auth/login', {
-        email,
-        password
-      });
-      if (response.data.statusCode === 200) {
-        localStorage.setItem('token', response.data.data.token);
-                dispatch(login(response.data.token));
+  // ✅ useFormik Hook
+  const formik = useFormik({
+    initialValues: { email: '', password: '' },
+    validationSchema,
+    onSubmit: async (values) => {
+      setLoading(true);
+      setApiMessage(''); // clear previous message
 
-        navigate('/dashboard');
-      } else {
-        console.log(response.data.message || 'Invalid credentials');
+      try {
+        const response = await axios.post('http://localhost:3001/api/v1/auth/login', values);
+        
+        if (response.data.statusCode === 200) {
+          localStorage.setItem('token', response.data.data.token);
+          dispatch(login(response.data.data.token)); // ensure correct path
+          setApiMessage('Login successful! Redirecting...');
+          navigate('/dashboard');
+        } else {
+          setApiMessage(response.data.message || 'Invalid credentials');
+        }
+      } catch (error) {
+        setApiMessage(error.response?.data?.message || 'Something went wrong');
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
 
   return (
     <div className="login-container">
       <h2>Login</h2>
-      <form onSubmit={handleLogin}>
+      <form onSubmit={formik.handleSubmit}>
+        {/* Email Field */}
         <input
           type="email"
+          name="email"
           placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
+          value={formik.values.email}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
           className="input-field"
         />
+        {formik.touched.email && formik.errors.email ? (
+          <div className="error-text">{formik.errors.email}</div>
+        ) : null}
+
+        {/* Password Field */}
         <input
           type="password"
+          name="password"
           placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
+          value={formik.values.password}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
           className="input-field"
         />
+        {formik.touched.password && formik.errors.password ? (
+          <div className="error-text">{formik.errors.password}</div>
+        ) : null}
+
+        {/* API Response Message */}
+        {apiMessage && <p className="api-message">{apiMessage}</p>}
+
         <button type="submit" className="login-button" disabled={loading}>
           {loading ? 'Logging in...' : 'Login'}
         </button>
