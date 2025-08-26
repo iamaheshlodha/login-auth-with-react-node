@@ -12,7 +12,6 @@ export default function Login() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // ✅ Validation Schema
   const validationSchema = Yup.object({
     email: Yup.string()
       .email('Invalid email format')
@@ -22,22 +21,21 @@ export default function Login() {
       .required('Password is required'),
   });
 
-  // ✅ useFormik Hook
   const formik = useFormik({
     initialValues: { email: '', password: '' },
     validationSchema,
     onSubmit: async (values) => {
       setLoading(true);
-      setApiMessage(''); // clear previous message
+      setApiMessage('');
 
       try {
         const response = await axios.post('http://localhost:3001/api/v1/auth/login', values);
-        
+
         if (response.data.statusCode === 200) {
           localStorage.setItem('token', response.data.data.token);
-          dispatch(login(response.data.data.token)); // ensure correct path
+          dispatch(login({ token: response.data.data.token })); 
           setApiMessage('Login successful! Redirecting...');
-          navigate('/dashboard');
+          navigate('/dashboard', { replace: true });
         } else {
           setApiMessage(response.data.message || 'Invalid credentials');
         }
@@ -50,44 +48,41 @@ export default function Login() {
   });
 
   return (
-    <div className="login-container">
-      <h2>Login</h2>
-      <form onSubmit={formik.handleSubmit}>
-        {/* Email Field */}
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={formik.values.email}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          className="input-field"
-        />
-        {formik.touched.email && formik.errors.email ? (
-          <div className="error-text">{formik.errors.email}</div>
-        ) : null}
+      <div className="login-container">
+        <h2>Login</h2>
+        <form onSubmit={formik.handleSubmit}>
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            value={formik.values.email}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            className="input-field"
+          />
+          {formik.touched.email && formik.errors.email && (
+            <div className="error-text">{formik.errors.email}</div>
+          )}
 
-        {/* Password Field */}
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={formik.values.password}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          className="input-field"
-        />
-        {formik.touched.password && formik.errors.password ? (
-          <div className="error-text">{formik.errors.password}</div>
-        ) : null}
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            value={formik.values.password}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            className="input-field"
+          />
+          {formik.touched.password && formik.errors.password && (
+            <div className="error-text">{formik.errors.password}</div>
+          )}
 
-        {/* API Response Message */}
-        {apiMessage && <p className="api-message">{apiMessage}</p>}
+          {apiMessage && <p className="api-message">{apiMessage}</p>}
 
-        <button type="submit" className="login-button" disabled={loading}>
-          {loading ? 'Logging in...' : 'Login'}
-        </button>
-      </form>
-    </div>
+          <button type="submit" className="login-button" disabled={loading}>
+            {loading ? 'Logging in...' : 'Login'}
+          </button>
+        </form>
+      </div>
   );
 }

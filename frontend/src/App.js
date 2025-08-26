@@ -15,29 +15,18 @@ function App() {
       <Routes>
         <Route path="/" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />} />
 
-        <Route
-          element={
-            <PublicRoute>
-              <Outlet />
-            </PublicRoute>
-          }
-        >
+        <Route element={<PublicRoute />}>
           <Route path="/login" element={<Login />} />
         </Route>
 
-        <Route
-          element={
-            <PrivateRoute>
-              <Dashboard />
-            </PrivateRoute>
-          }
-        >
+        <Route element={<PrivateRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
+
   );
 }
 
